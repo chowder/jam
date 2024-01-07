@@ -1,4 +1,4 @@
-package main
+package pkg
 
 type Packet struct {
 	PacketType string      `json:"type"`

@@ -1,4 +1,4 @@
-package main
+package pkg
 
 import "github.com/brianvoe/gofakeit/v6"
 

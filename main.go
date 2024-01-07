@@ -7,6 +7,7 @@ package main
 import (
 	"embed"
 	"flag"
+	"github.com/chowder/jam/pkg"
 	"io/fs"
 	"log"
 	"net/http"
@@ -35,8 +36,8 @@ func serveHome(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	flag.Parse()
-	hub := newHub()
-	go hub.run()
+	hub := pkg.NewHub()
+	go hub.Run()
 
 	staticRoot, err := fs.Sub(static, "static/dist")
 	if err != nil {
@@ -46,7 +47,7 @@ func main() {
 	http.Handle("/", http.FileServer(http.FS(staticRoot)))
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		log.Print("Incoming connection from ", r.RemoteAddr)
-		serveWs(hub, w, r)
+		pkg.ServeWs(hub, w, r)
 	})
 
 	server := &http.Server{
