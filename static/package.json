@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "esbuild": "^0.19.11",
+    "kaboom": "^3000.1.17"
+  },
+  "scripts": {
+    "build": "./node_modules/esbuild/bin/esbuild index.js --external:kaboom --bundle > dist/bundle.js"
+  }
+}

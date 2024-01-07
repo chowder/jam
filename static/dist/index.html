@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Game</title>
+    <script src="https://unpkg.com/kaboom@3000.1.17/dist/kaboom.js"></script>
+</head>
+<style>
+    .container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        background: #ddd;
+    }
+
+    body,
+    html {
+        height: 100%;
+    }
+</style>
+<body>
+<div class="container">
+    <canvas id="game"></canvas>
+</div>
+<script type="module" src="bundle.js"></script>
+</body>
+</html>
