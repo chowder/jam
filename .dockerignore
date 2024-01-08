@@ -1,0 +1,6 @@
+.git
+.gitignore
+LICENSE
+fly.toml
+run.sh
+static/node_modules

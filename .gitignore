@@ -1,3 +1,4 @@
 static/dist/bundle.js
 static/node_modules
 .idea/
+fly.toml

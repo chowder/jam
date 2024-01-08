@@ -6,7 +6,7 @@ COPY static/package.json .
 COPY static/package-lock.json .
 RUN npm install
 
-COPY static .
+COPY static/ ./
 RUN npm run build
 
 # Build server
@@ -24,4 +24,4 @@ RUN go build
 FROM debian:bookworm-slim
 WORKDIR /app
 COPY --from=app /usr/src/app/jam .
-ENTRYPOINT ["./jam", "-addr", "0.0.0.0:80"]
+ENTRYPOINT ["./jam", "-addr", "0.0.0.0:8080"]
