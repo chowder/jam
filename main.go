@@ -55,6 +55,7 @@ func main() {
 		ReadHeaderTimeout: 3 * time.Second,
 	}
 
+	log.Println("Serving on", server.Addr)
 	err = server.ListenAndServe()
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
