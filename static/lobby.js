@@ -317,7 +317,7 @@ export const lobby = ({socket}) => scene("lobby", () => {
     const handleDeath = ({data}) => {
         let player = playersByName.get(data.name);
         if (player !== undefined) {
-            player.destroy();
+            player.play("dead");
         }
     }
 
