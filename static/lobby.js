@@ -2,6 +2,17 @@ const PLAYER_NAME_HEIGHT_OFFSET = 24
 
 const JUMP_FORCE = 300
 const MOVE_SPEED = 100
+const CUBES_START_HEIGHT = 300
+const FLOOR_HEIGHT = 1000
+
+const cube = (identifier) => {
+    return {
+        id: "cube",
+        getIdentifier() {
+            return identifier;
+        }
+    }
+}
 
 export const lobby = ({socket}) => scene("lobby", () => {
     let playersByName = new Map();
@@ -15,16 +26,61 @@ export const lobby = ({socket}) => scene("lobby", () => {
         anchor("center"),
     ])
 
-    // Floor
+    // Background
     add([
-        rect(width(), 20),
-        pos(0, 240),
-        area(),
-        body({isStatic: true}),
-        anchor("botleft"),
+        sprite("background"),
+        pos(0, -200),
     ])
 
+    // Left wall
+    add([
+        rect(10, 1300),
+        pos(0, 0),
+        body({isStatic: true}),
+        area(),
+        anchor("topright"),
+    ])
+
+    // Right wall
+    add([
+        rect(10, 1300),
+        pos(width(), 0),
+        body({isStatic: true}),
+        area(),
+        anchor("topleft"),
+    ])
+
+    // Floor
+    add([
+        rect(width(), 200),
+        color(Color.fromHex("3E3232")),
+        pos(0, FLOOR_HEIGHT),
+        body({isStatic: true}),
+        area(),
+        "floor"
+    ])
+
+    // Cubes
+    const ROWS = 5
+    const COLUMNS = 10
+
+    for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLUMNS; x++) {
+            add([
+                rect(32, 32),
+                pos(x * 32, y * 32 + CUBES_START_HEIGHT),
+                color(Color.fromHex("777777")),
+                area(),
+                body({isStatic: true}),
+                anchor("topleft"),
+                cube(`${x}:${y}`),
+            ])
+        }
+    }
+
     //#region Me
+    let playerAlive = true;
+
     let me = add([
         sprite("bread", {anim: "idle"}),
         anchor("center"),
@@ -47,6 +103,31 @@ export const lobby = ({socket}) => scene("lobby", () => {
         anchor("center"),
         color(),
     ]);
+
+    me.onGround((thing) => {
+        if (thing.is("cube")) {
+            me.jump(JUMP_FORCE);
+            destroy(thing);
+
+            // Tell other people to delete this
+            const message = {
+                type: "DESTROY",
+                data: {
+                    tag: thing.getIdentifier()
+                },
+            }
+            socket.send(JSON.stringify(message));
+
+        } else if (thing.is("floor")) {
+            me.play("dead");
+            addKaboom(me.pos);
+            playerAlive = false;
+        }
+    });
+
+    me.onUpdate(() => {
+        camPos(camPos().x, me.pos.y);
+    });
     //#endregion
 
     //#region Controls
@@ -56,13 +137,17 @@ export const lobby = ({socket}) => scene("lobby", () => {
     };
 
     const moveLeft = () => {
-        me.move(-MOVE_SPEED, 0);
-        me.flipX = false;
+        if (playerAlive) {
+            me.move(-MOVE_SPEED, 0);
+            me.flipX = false;
+        }
     }
 
     const moveRight = () => {
-        me.move(MOVE_SPEED, 0);
-        me.flipX = true;
+        if (playerAlive) {
+            me.move(MOVE_SPEED, 0);
+            me.flipX = true;
+        }
     }
 
     const moveLeftButton = add([
@@ -176,6 +261,18 @@ export const lobby = ({socket}) => scene("lobby", () => {
         if (player !== undefined) {
             player.pos.x = data.x;
             player.pos.y = data.y;
+            player.flipX = data.flipX;
+        }
+    }
+
+    const handleDestroy = ({data}) => {
+        const identifier = data.tag;
+        const cubes=  get("cube");
+        for (let i = 0; i < cubes.length; i++) {
+            const cube = cubes[i];
+            if (cube.getIdentifier() === identifier) {
+                destroy(cube);
+            }
         }
     }
 
@@ -184,16 +281,19 @@ export const lobby = ({socket}) => scene("lobby", () => {
         let data = packet.data;
         switch (packet.type) {
             case "SET_PLAYER":
-                handleSetPlayer({data})
+                handleSetPlayer({data});
                 break;
             case "PLAYER_JOIN":
-                handlePlayerJoin({data})
+                handlePlayerJoin({data});
                 break;
             case "PLAYER_LEAVE":
-                handlePlayerLeave({data})
+                handlePlayerLeave({data});
                 break;
             case "PLAYER_POSITION":
-                handlePlayerPosition({data})
+                handlePlayerPosition({data});
+                break;
+            case "DESTROY":
+                handleDestroy({data});
                 break;
         }
     }
@@ -206,6 +306,7 @@ export const lobby = ({socket}) => scene("lobby", () => {
                     name: myName.text,
                     x: me.pos.x,
                     y: me.pos.y,
+                    flipX: me.flipX,
                 },
             };
             socket.send(JSON.stringify(message))
@@ -213,8 +314,6 @@ export const lobby = ({socket}) => scene("lobby", () => {
         onSceneLeave(_ => clearInterval(updatePosition));
     })
     //#endregion
-
-    onKeyPress('space', () => jump(me))
 
     socket.addEventListener("message", socketListener)
     onSceneLeave(_ => socket.removeEventListener("message", socketListener));
