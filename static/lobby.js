@@ -2,7 +2,8 @@ const PLAYER_NAME_HEIGHT_OFFSET = 24
 
 const JUMP_FORCE = 300
 const MOVE_SPEED = 100
-const CUBES_START_HEIGHT = 300
+const CAGE_HEIGHT = 100
+const CUBES_START_HEIGHT = 320
 const FLOOR_HEIGHT = 1000
 
 const cube = (identifier) => {
@@ -19,17 +20,18 @@ export const lobby = ({socket}) => scene("lobby", () => {
 
     setGravity(640)
 
-    // Title
-    add([
-        text("Lobby", {size: 32}),
-        pos(width() / 2, 20),
-        anchor("center"),
-    ])
-
     // Background
     add([
         sprite("background"),
         pos(0, -200),
+    ])
+
+    // Lobby text
+    add([
+        text("Lobby", {size: 32}),
+        pos(width() / 2, 20),
+        anchor("center"),
+        "lobby",
     ])
 
     // Left wall
@@ -48,6 +50,15 @@ export const lobby = ({socket}) => scene("lobby", () => {
         body({isStatic: true}),
         area(),
         anchor("topleft"),
+    ])
+
+    // Gate
+    add([
+        rect(width(), 50),
+        pos(0, CAGE_HEIGHT),
+        body({isStatic: true}),
+        area(),
+        "gate",
     ])
 
     // Floor
@@ -199,11 +210,21 @@ export const lobby = ({socket}) => scene("lobby", () => {
 
     onKeyDown("left", () => {
         moveLeft();
-    })
+    });
 
     onKeyDown("right", () => {
         moveRight();
-    })
+    });
+
+    if (window.location.hash) {
+        onKeyPress("s", () => {
+            const message = {
+                type: "START",
+                data: {},
+            };
+            socket.send(JSON.stringify(message));
+        })
+    }
     //#endregion
 
     onUpdate(() => {
@@ -276,6 +297,15 @@ export const lobby = ({socket}) => scene("lobby", () => {
         }
     }
 
+    const handleStart = ({data}) => {
+        destroyAll("gate");
+        const players = get("player");
+        for (let i = 0; i < players.length; i++) {
+            players[i].play("falling");
+        }
+        destroyAll("lobby");
+    };
+
     const socketListener = (event) => {
         let packet = JSON.parse(event.data);
         let data = packet.data;
@@ -294,6 +324,9 @@ export const lobby = ({socket}) => scene("lobby", () => {
                 break;
             case "DESTROY":
                 handleDestroy({data});
+                break;
+            case "START":
+                handleStart({data});
                 break;
         }
     }
