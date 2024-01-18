@@ -9,7 +9,7 @@ kaboom({
     font: "vom",
 });
 
-loadFont("vom", "fonts/vcr_osd_mono.ttf")
+loadFont("vom", "fonts/vcr_osd_mono.ttf");
 
 loadSpriteAtlas("sprites/bread.png", {
     "bread": {
@@ -25,15 +25,15 @@ loadSpriteAtlas("sprites/bread.png", {
             dead: 3,
         }
     }
-})
+});
 
-loadSprite("left-icon", "sprites/left.png")
-loadSprite("right-icon", "sprites/right.png")
-loadSprite("background", "sprites/background.png")
+loadSprite("left-icon", "sprites/left.png");
+loadSprite("right-icon", "sprites/right.png");
+loadSprite("background", "sprites/background.png");
 
 let protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
 let socket = new WebSocket(`${protocol}//${window.location.host}/ws`);
 
 lobby({socket});
 
-go("lobby")
+go("lobby");

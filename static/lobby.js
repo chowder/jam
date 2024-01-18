@@ -133,6 +133,14 @@ export const lobby = ({socket}) => scene("lobby", () => {
             me.play("dead");
             addKaboom(me.pos);
             playerAlive = false;
+
+            const message = {
+                type: "DEATH",
+                data: {
+                    name: myName.text,
+                }
+            }
+            socket.send(JSON.stringify(message));
         }
     });
 
@@ -306,6 +314,13 @@ export const lobby = ({socket}) => scene("lobby", () => {
         destroyAll("lobby");
     };
 
+    const handleDeath = ({data}) => {
+        let player = playersByName.get(data.name);
+        if (player !== undefined) {
+            player.destroy();
+        }
+    }
+
     const socketListener = (event) => {
         let packet = JSON.parse(event.data);
         let data = packet.data;
@@ -327,6 +342,9 @@ export const lobby = ({socket}) => scene("lobby", () => {
                 break;
             case "START":
                 handleStart({data});
+                break;
+            case "DEATH":
+                handleDeath({data});
                 break;
         }
     }
