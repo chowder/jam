@@ -2,15 +2,32 @@ import {lobby} from "./lobby"
 
 kaboom({
     width: 320,
-    height: 240,
+    height: 360,
     background: [58, 55, 65],
     canvas: document.querySelector("#game"),
     crisp: true,
     font: "vom",
 });
 
-// loadFont("pixeboy", "fonts/pixeboy.ttf")
 loadFont("vom", "fonts/vcr_osd_mono.ttf")
+
+loadSpriteAtlas("sprites/bread.png", {
+    "bread": {
+        x: 0,
+        y: 0,
+        width: 32 * 3,
+        height: 24,
+        sliceX: 3,
+        sliceY: 1,
+        anims: {
+            idle: {from: 0, to: 1, speed: 2, loop: true},
+            falling: 2,
+        }
+    }
+})
+
+loadSprite("left-icon", "sprites/left.png")
+loadSprite("right-icon", "sprites/right.png")
 
 let protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
 let socket = new WebSocket(`${protocol}//${window.location.host}/ws`);
