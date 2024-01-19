@@ -29,7 +29,15 @@ loadSpriteAtlas("sprites/bread.png", {
 
 loadSprite("left-icon", "sprites/left.png");
 loadSprite("right-icon", "sprites/right.png");
+loadSprite("start-button", "sprites/buttonStart.png");
+
 loadSprite("background", "sprites/background.png");
+
+loadSound("bgm", "audio/bgm.mp3");
+loadSound("pop", "audio/pop.mp3");
+loadSound("bounce", "audio/bounce.mp3");
+loadSound("impact", "audio/impact.ogg");
+loadSound("stinger", "audio/stinger.mp3");
 
 let protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
 let socket = new WebSocket(`${protocol}//${window.location.host}/ws`);

@@ -4,7 +4,7 @@ const JUMP_FORCE = 300
 const MOVE_SPEED = 100
 const CAGE_HEIGHT = 100
 const CUBES_START_HEIGHT = 320
-const FLOOR_HEIGHT = 1000
+const FLOOR_HEIGHT = 1600
 
 const cube = (identifier) => {
     return {
@@ -16,9 +16,14 @@ const cube = (identifier) => {
 }
 
 export const lobby = ({socket}) => scene("lobby", () => {
+    const bgm = play("bgm", {
+        volume: 0.2,
+        loop: true
+    });
+
     let playersByName = new Map();
 
-    setGravity(640)
+    setGravity(640);
 
     // Background
     add([
@@ -28,8 +33,8 @@ export const lobby = ({socket}) => scene("lobby", () => {
 
     // Lobby text
     add([
-        text("Lobby", {size: 32}),
-        pos(width() / 2, 20),
+        text("Waiting for players...", {size: 16}),
+        pos(width() / 2, -10),
         anchor("center"),
         "lobby",
     ])
@@ -54,7 +59,7 @@ export const lobby = ({socket}) => scene("lobby", () => {
 
     // Gate
     add([
-        rect(width(), 50),
+        rect(width(), 10),
         pos(0, CAGE_HEIGHT),
         body({isStatic: true}),
         area(),
@@ -64,10 +69,11 @@ export const lobby = ({socket}) => scene("lobby", () => {
     // Floor
     add([
         rect(width(), 200),
-        color(Color.fromHex("3E3232")),
+        color(Color.fromHex("031519")),
         pos(0, FLOOR_HEIGHT),
         body({isStatic: true}),
         area(),
+        anchor("topleft"),
         "floor"
     ])
 
@@ -80,7 +86,7 @@ export const lobby = ({socket}) => scene("lobby", () => {
             add([
                 rect(32, 32),
                 pos(x * 32, y * 32 + CUBES_START_HEIGHT),
-                color(Color.fromHex("777777")),
+                color(Color.fromHex("FFC689")),
                 area(),
                 body({isStatic: true}),
                 anchor("topleft"),
@@ -119,6 +125,7 @@ export const lobby = ({socket}) => scene("lobby", () => {
         if (thing.is("cube")) {
             me.jump(JUMP_FORCE);
             destroy(thing);
+            play("bounce", {volume: 0.3});
 
             // Tell other people to delete this
             const message = {
@@ -133,6 +140,10 @@ export const lobby = ({socket}) => scene("lobby", () => {
             me.play("dead");
             addKaboom(me.pos);
             playerAlive = false;
+
+            bgm.stop();
+            play("impact");
+            play("stinger", {volume: 0.1});
 
             const message = {
                 type: "DEATH",
@@ -185,6 +196,23 @@ export const lobby = ({socket}) => scene("lobby", () => {
         area(),
     ]);
 
+    const startButton = add([
+        sprite("start-button"),
+        pos(width() / 2, height() - 50),
+        fixed(),
+        area(),
+        anchor("center"),
+        "startButton",
+    ])
+
+    const startGame = () => {
+        const message = {
+            type: "START",
+            data: {},
+        };
+        socket.send(JSON.stringify(message));
+    }
+
     onTouchStart((pos, _) => {
         if (moveLeftButton.hasPoint(pos)) {
             moveLeftButton.opacity = 1;
@@ -192,8 +220,12 @@ export const lobby = ({socket}) => scene("lobby", () => {
         } else if (moveRightButton.hasPoint(pos)) {
             moveRightButton.opacity = 1;
             buttonPressed.right = true;
+        } else if (startButton.hasPoint(pos)) {
+            startGame();
         }
     });
+
+    onClick("startButton", startGame);
 
     onTouchEnd((pos, _) => {
         if (moveLeftButton.hasPoint(pos)) {
@@ -224,15 +256,6 @@ export const lobby = ({socket}) => scene("lobby", () => {
         moveRight();
     });
 
-    if (window.location.hash) {
-        onKeyPress("s", () => {
-            const message = {
-                type: "START",
-                data: {},
-            };
-            socket.send(JSON.stringify(message));
-        })
-    }
     //#endregion
 
     onUpdate(() => {
@@ -296,7 +319,7 @@ export const lobby = ({socket}) => scene("lobby", () => {
 
     const handleDestroy = ({data}) => {
         const identifier = data.tag;
-        const cubes=  get("cube");
+        const cubes = get("cube");
         for (let i = 0; i < cubes.length; i++) {
             const cube = cubes[i];
             if (cube.getIdentifier() === identifier) {
@@ -306,12 +329,14 @@ export const lobby = ({socket}) => scene("lobby", () => {
     }
 
     const handleStart = ({data}) => {
+        play("pop", {volume: 0.25});
         destroyAll("gate");
+        destroyAll("startButton");
+        destroyAll("lobby");
         const players = get("player");
         for (let i = 0; i < players.length; i++) {
             players[i].play("falling");
         }
-        destroyAll("lobby");
     };
 
     const handleDeath = ({data}) => {
